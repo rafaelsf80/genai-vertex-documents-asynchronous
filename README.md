@@ -1,6 +1,6 @@
 # Q&A on large unstructured documents with Vertex AI LLM, Chroma, langChain and Document AI OCR
 
-The repo includes a [Gradio app](https://gradio.app/) to ask large docs by showing the combined capabilities of Vertex LLM models, a vector store like Chroma, langChain and Google Cloud Document AI OCR. So, basically this repo implements a semantic search on large and unstructured documents.
+The repo includes a [Gradio app](https://gradio.app/) to ask large docs by showing the combined capabilities of Vertex LLM models, a vector store like [Chroma](https://github.com/chroma-core/chroma), [langChain](https://github.com/hwchase17/langchain) and [Google Cloud Document AI OCR](https://cloud.google.com/document-ai/docs/samples/documentai-process-ocr-document#documentai_process_ocr_document-python). So, basically this repo implements a semantic search on large and unstructured documents.
 
 The sample we will use is the public 2022 BBVA annual report (in English), a 564-page pdf that can be downloaded from [here](https://shareholdersandinvestors.bbva.com/wp-content/uploads/2023/03/Annual-Report-BBVA_2022_ENG.pdf). You can replace this doc with any other, like mortgages or any other large documents in the Finance and Insurance industry, even if they contain images or scanned information. 
     
@@ -48,7 +48,7 @@ The Gradio app will implement the full cycle described above in a single app:
 
 > NOTE: the whole process can take up to 30 minutes.
 
-Refer to [this Medium post](https://medium.com/google-cloud/generative-ai-palm-2-model-deployment-with-cloud-run-54e8a398b24b) on how to set the Gradio app with minimum permissions. To build and deploy the [Gradio app](https://gradio.app/) in [Cloud Run](https://cloud.google.com/run/docs/quickstarts/deploy-container), execute the following commands.
+Refer to [this Medium post](https://medium.com/google-cloud/generative-ai-palm-2-model-deployment-with-cloud-run-54e8a398b24b) on how to set the Gradio app with minimum permissions. On top of those permissions, you will need for this app the following: `Private Logs Viewer`and `Storage Admin` (crete buckets) and `Document AI Admin`. To build and deploy the [Gradio app](https://gradio.app/) in [Cloud Run](https://cloud.google.com/run/docs/quickstarts/deploy-container), execute the following commands.
 
 Note authentication is disabled and the service account in the one configured earlier:
 
