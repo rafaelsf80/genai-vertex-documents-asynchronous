@@ -23,7 +23,7 @@ client.setup_logging()
 log_name = "genai-vertex-large-unstructured-log"
 logger = client.logger(log_name)
 
-logger.log_text(f"Please, upload a file first") # set first log entry
+logger.log_text(f"STEP 1/9: Please, upload a file first") # set first log entry
 
 
 def ocr_batch_parser(file):
@@ -45,15 +45,13 @@ def ocr_batch_parser(file):
 
     # GCS_INPUT_URI format "gs://argolis-documentai-latam/Annual-Report-BBVA_2022_ENG.pdf"
     GCS_INPUT_URI = f'gs://{GCS_INPUT_BUCKET}/{FILE_NAME}'
-    logger.log_text(f"Batch processing: {GCS_INPUT_URI}")
+    logger.log_text(f"STEP 2/9: Batch processing: {GCS_INPUT_URI}")
     print(f"Batch processing: {GCS_INPUT_URI}")
-    # You must set the api_endpoint if you use a location other than "us".
     opts = ClientOptions(api_endpoint=f"{LOCATION}-documentai.googleapis.com")
 
     client = documentai.DocumentProcessorServiceClient(client_options=opts)
 
     if not GCS_INPUT_URI.endswith("/") and "." in GCS_INPUT_URI:
-        # Specify specific GCS URIs to process individual documents
         gcs_document = documentai.GcsDocument(
             gcs_uri=GCS_INPUT_URI, mime_type=INPUT_MIME_TYPE
         )
@@ -61,12 +59,11 @@ def ocr_batch_parser(file):
         gcs_documents = documentai.GcsDocuments(documents=[gcs_document])
         input_config = documentai.BatchDocumentsInputConfig(gcs_documents=gcs_documents)
     else:
-        # Specify a GCS URI Prefix to process an entire directory
         gcs_prefix = documentai.GcsPrefix(gcs_uri_prefix=GCS_INPUT_URI)
         input_config = documentai.BatchDocumentsInputConfig(gcs_prefix=gcs_prefix)
 
     # Cloud Storage URI for the Output Directory
-    logger.log_text(f"Output directory: {GCS_OUTPUT_URI}")
+    logger.log_text(f"STEP 3/9: Output directory: {GCS_OUTPUT_URI}")
     print(f"Output directory: {GCS_OUTPUT_URI}")
     gcs_output_config = documentai.DocumentOutputConfig.GcsOutputConfig(
         gcs_uri=GCS_OUTPUT_URI
@@ -88,11 +85,9 @@ def ocr_batch_parser(file):
     operation = client.batch_process_documents(request)
 
     # Continually polls the operation until it is complete.
-    # This could take some time for larger files
-    # Format: projects/{project_id}/locations/{location}/operations/{operation_id}
     try:
         print(f"Waiting for operation {operation.operation.name} to complete...")
-        logger.log_text(f"Waiting for operation {operation.operation.name} to complete...")
+        logger.log_text(f"STEP 4/9: Waiting for operation {operation.operation.name} to complete...")
         operation.result(timeout=TIMEOUT)
     # Catch exception when operation doesn"t finish before timeout
     except (RetryError, InternalServerError) as e:
@@ -105,7 +100,7 @@ def ocr_batch_parser(file):
 
     storage_client = storage.Client()
 
-    logger.log_text("Processing outputs")
+    logger.log_text("STEP 5/9: Processing outputs")
     print(f"Processing outputs")
 
     # One process per Input Document
@@ -138,16 +133,12 @@ def ocr_batch_parser(file):
                 continue
 
             # Download JSON File as bytes object and convert to Document Object
-            logger.log_text(f"Fetching {blob.name}")
+            logger.log_text(f"STEP 6/9: Fetching {blob.name}")
             document = documentai.Document.from_json(
                 blob.download_as_bytes(), ignore_unknown_fields=True
             )
 
-            # For a full list of Document object attributes, please reference this page:
-            # https://cloud.google.com/python/docs/reference/documentai/latest/google.cloud.documentai_v1.types.Document
-
-            # Read the text recognition output from the processor
-            logger.log_text("The json contains the following text:")
+            logger.log_text("STEP 6/9: The json contains the following text:")
             logger.log_text(f"Processing text from json: {document.text}")
             f.write(document.text)
             
@@ -163,7 +154,7 @@ def create_chroma_index():
     from langchain.document_loaders import PyPDFLoader
     from langchain.document_loaders import UnstructuredFileLoader
 
-    logger.log_text("Please, wait. Document is being indexed ...")
+    logger.log_text("STEP 7/9: Please, wait. Document is being indexed ...")
     loader = UnstructuredFileLoader("output_all.txt")
     documents = loader.load()
 
@@ -173,16 +164,15 @@ def create_chroma_index():
     text_splitter = RecursiveCharacterTextSplitter(chunk_size=1000, chunk_overlap=0)
     docs = text_splitter.split_documents(documents)
 
-    #docs = text_splitter.create_documents([doc_mexico])
-    logger.log_text(f"# of documents = {len(docs)}")
-
+    logger.log_text(f"STEP 8/9: # of documents = {len(docs)}")
     db.add_documents(documents=docs, embedding=embedding)
 
-    logger.log_text("INDEX COMPLETED. You can now query the doc by clicking the Submit button")
+    logger.log_text("STEP 9/9: INDEX COMPLETED. You can now query the doc by clicking the Submit button")
 
 
 
 def formatter(result):
+
     logger.log_text(f"Query: {result['query']}")
     logger.log_text("."*80)
     logger.log_text(f"Response: {result['result']}")
@@ -211,16 +201,17 @@ def retrieval_query(prompt):
         llm=llm,
         chain_type="stuff",
         retriever=retriever,
-        # chain_type_kwargs={"prompt": PromptTemplate(
-        #         template=template,
-        #         input_variables=["context", "question"],
-        #     ),},
         return_source_documents=True)
 
     result = qa({"query": prompt})
-    #logger.log_text(formatter(result))
 
     return result['result'], result['source_documents']
+
+
+def update_logs():
+    *_, last = logger.list_entries() # for a better understanding check PEP 448
+    timestamp = last.timestamp.isoformat()
+    return "* {}: {}".format(timestamp, last.payload)
 
 
 llm = VertexAI(
@@ -237,15 +228,8 @@ embedding = VertexAIEmbeddings(requests_per_minute=REQUESTS_PER_MINUTE)
 
 db = Chroma(collection_name="langchain", embedding_function=embedding)
 
-def update_logs():
-    # for entry in logger.list_entries():
-    #     timestamp = entry.timestamp.isoformat()
-    #     print("* {}: {}".format(timestamp, entry.payload))
-    *_, last = logger.list_entries() # for a better understanding check PEP 448
-    timestamp = last.timestamp.isoformat()
-    return "* {}: {}".format(timestamp, last.payload)
-
 demo = gr.Blocks()
+
 with demo:
     gr.Markdown("# DOCUMENT SEMANTIC SEARCH DEMO (LARGE DOCUMENTS)")
 
