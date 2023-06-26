@@ -18,7 +18,7 @@ processor_id = "80f1bd0f1b6b7f77"  # Create processor before running sample
 gcs_output_uri = "gs://argolis-documentai-latam/"  # Must end with a trailing slash `/`. Format: gs://bucket/directory/subdirectory/
 
 # TODO(developer): If `gcs_input_uri` is a single file, `mime_type` must be specified.
-gcs_input_uri = "gs://argolis-documentai-latam/Annual-Report-BBVA_2022_ENG.pdf"  # Format: `gs://bucket/directory/file.pdf` or `gs://bucket/directory/`
+gcs_input_uri = "gs://argolis-documentai-latam/CaterpillarC1.PDF"  # Format: `gs://bucket/directory/file.pdf` or `gs://bucket/directory/`
 input_mime_type = "application/pdf"
 field_mask = "text,entities,pages.pageNumber"  # Optional. The fields to return in the Document object.
 

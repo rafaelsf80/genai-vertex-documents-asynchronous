@@ -6,7 +6,9 @@ from google.cloud import logging
 from google.cloud import storage
 from google.cloud import documentai_v1 as documentai
 
+import os
 import re
+import shutil
 
 import gradio as gr
 
@@ -20,11 +22,13 @@ PROJECT_ID = "argolis-rafaelsanchez-ml-dev"
 client = logging.Client(project=PROJECT_ID)
 client.setup_logging()
 
-log_name = "genai-vertex-large-unstructured-log"
+log_name = "genai-vertex-large-unstructured-prod-log"
 logger = client.logger(log_name)
 
-logger.log_text(f"STEP 1/9: Please, upload a file first") # set first log entry
 
+# output logs to terminal console when in local - otherwise logs are only visible when running in GCP
+#if os.getenv("LOCAL_LOGGING", "False") == "True":
+#    logger.addHandler(logging.StreamHandler())
 
 def ocr_batch_parser(file):
 
@@ -37,13 +41,17 @@ def ocr_batch_parser(file):
     TIMEOUT          = 8000
     FIELD_MASK       = "text,entities,pages.pageNumber"  # Optional. The fields to return in the Document object.
    
+    if os.path.isdir('./.chroma'):
+        shutil.rmtree('./.chroma')
+    logger.log_text(f"STEP 1/9: Uploading file to GCS") 
+
     # Upload file to GCS
     client = storage.Client(project=PROJECT_ID)
     bucket = client.get_bucket(GCS_INPUT_BUCKET)
     blob = bucket.blob(FILE_NAME)
     blob.upload_from_filename(file.name) # full local name
 
-    # GCS_INPUT_URI format "gs://argolis-documentai-latam/Annual-Report-BBVA_2022_ENG.pdf"
+    # GCS_INPUT_URI must have this format: gs://argolis-documentai-latam/Annual-Report-BBVA_2022_ENG.pdf
     GCS_INPUT_URI = f'gs://{GCS_INPUT_BUCKET}/{FILE_NAME}'
     logger.log_text(f"STEP 2/9: Batch processing: {GCS_INPUT_URI}")
     print(f"Batch processing: {GCS_INPUT_URI}")
@@ -155,6 +163,7 @@ def create_chroma_index():
     from langchain.document_loaders import UnstructuredFileLoader
 
     logger.log_text("STEP 7/9: Please, wait. Document is being indexed ...")
+    
     loader = UnstructuredFileLoader("output_all.txt")
     documents = loader.load()
 
@@ -235,6 +244,7 @@ with demo:
 
     docai_file = gr.File(label="Upload large doc", type="file")
   
+    gr.Markdown("### INSTRUCTIONS: upload a file first. When logs shows INDEX COMPLETED, you can make the query, but not before.")
     gr.Markdown("### PROMPT: Ask questions on the doc. Example: 'What was BBVA net income in 2022?', 'How BBVA help its customers improve their financial health'")
     prompt = gr.Textbox(label="Prompt")
        

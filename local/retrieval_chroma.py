@@ -57,8 +57,7 @@ qa = RetrievalQA.from_chain_type(
     #     ),},
     return_source_documents=True)
 
-#query = "What was BBVA net income in 2022?"
-query= "How BBVA help its customers improve their financial health"
+query = "What was BBVA net income in 2022?"
 
 result = qa({"query": query})
 print(result)

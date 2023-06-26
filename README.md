@@ -51,6 +51,16 @@ To launch the retrieval, launch `python3 retrieval_chroma.py`. This script uses 
 python3 retrieval_chroma.py
 ```
 
+So, to summarize, you can run the full cycle locally by executing these steps (and modifying the constants):
+
+```sh
+# First step: run OCR
+python3 python3 ocr_batch.py
+# Second step: create Chroma index
+python3 create_index_chroma.py
+# Third step: query the document by launching the retrieval process
+python3 retrieval_chroma.py
+```
 
 ## Full application in Gradio
 
@@ -89,14 +99,14 @@ To build and deploy the [Gradio app](https://gradio.app/) in [Cloud Run](https:/
 
 ```sh
 PROJECT_ID=<REPLACE_WITH_YOUR_PROJECT_ID>
-REGION=<REPLACE_WITH_YOUR_GCP_REGION_NAME>
-AR_REPO=<REPLACE_WITH_YOUR_AR_REPO_NAME>
+REGION=<REPLACE_WITH_YOUR_REGION>
+AR_REPO=<REPLACE_WITH_YOUR_PAR_REPO>
 SERVICE_NAME=docai-large
 
 gcloud artifacts repositories create $AR_REPO --location=$REGION --repository-format=Docker
 gcloud auth configure-docker $REGION-docker.pkg.dev
 gcloud builds submit --tag $REGION-docker.pkg.dev/$PROJECT_ID/$AR_REPO/$SERVICE_NAME
-gcloud run deploy $SERVICE_NAME --port 7860 --image $REGION-docker.pkg.dev/$PROJECT_ID/$AR_REPO/$SERVICE_NAME --service-account=cloud-run-llm@$PROJECT_ID.iam.gserviceaccount.com --allow-unauthenticated --region=europe-west4 --platform=managed  --project=$PROJECT_ID
+gcloud run deploy $SERVICE_NAME --port 7860 --image $REGION-docker.pkg.dev/$PROJECT_ID/$AR_REPO/$SERVICE_NAME --service-account=cloud-run-llm@$PROJECT_ID.iam.gserviceaccount.com --allow-unauthenticated --region=europe-west4 --platform=managed  --project=$PROJECT_ID --memory=2G
 ```
 
 
