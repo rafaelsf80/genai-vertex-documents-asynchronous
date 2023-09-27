@@ -62,14 +62,16 @@ python3 create_index_chroma.py
 python3 retrieval_chroma.py
 ```
 
-## Full application in Gradio
+
+## End-to-end application in Gradio
 
 The Gradio app will implement the full cycle described above in a single app:
 
-1. Load a pdf file
-2. Perform **batch processing** with Document AI OCR parser, converting to text.
+1. Load a pdf file.
+2. Perform **batch processing** with Document AI OCR parser.
 3. Create the index with Chroma.
-4. After 20-30 min (batch processing in Document AI OCR consumes time), the user can then write the query, and the Retrieval QA chain will recover the blocks closer to the query. A Vertex LLM model will write the output to the user.
+4. After 20-30 min depending on the doc size (batch processing in Document AI OCR consumes time), the user can then write the query, and the Retrieval QA chain will recover the blocks closer to the query. A Vertex LLM model will write the output to the user.
+5. Make sure you refresh the indexes and select a document before making the query.
 
 > NOTE: the full cycle described above can take up to 30 minutes before you can query the doc. Main time consumption is due to the Document AI OCR batch processing.
 

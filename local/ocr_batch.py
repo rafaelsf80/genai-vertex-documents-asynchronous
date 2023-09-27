@@ -112,6 +112,7 @@ def batch_process_documents(
         raise ValueError(f"Batch Process Failed: {metadata.state_message}")
 
     storage_client = storage.Client()
+    print(metadata)
 
     logger.log_text("Output files:")
     # One process per Input Document
@@ -132,7 +133,7 @@ def batch_process_documents(
         output_blobs = storage_client.list_blobs(output_bucket, prefix=output_prefix)
 
         # Document AI may output multiple JSON files per source file
-        f = open(f'output_all.txt', 'w+')
+        f = open(f'output_all_{blob.name}.txt', 'w+')
         for blob in output_blobs:
             # Document AI should only output JSON files to GCS
             if blob.content_type != "application/json":
@@ -168,3 +169,5 @@ if __name__ == "__main__":
         input_mime_type=input_mime_type,
         field_mask=field_mask,
     )
+
+# write to gcs
